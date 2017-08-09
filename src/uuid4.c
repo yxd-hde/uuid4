@@ -13,6 +13,10 @@
 #include <wincrypt.h>
 #endif
 
+#if defined(ESP_PLATFORM)
+#include <esp_system.h>
+#endif
+
 #include "uuid4.h"
 
 
@@ -57,6 +61,16 @@ static int init_seed(void) {
   if (!res) {
     return UUID4_EFAILURE;
   }
+
+#elif defined(ESP_PLATFORM)
+  uint32_t m, l;
+  for (int i = 0; i < sizeof(seed) / sizeof(seed[0]); i++) {
+    /* esp_random should be called when an RF subsystem is running */
+    m = esp_random();
+    l = esp_random();
+    seed[i] = (uint64_t) m << 32 | l;
+  }
+  return UUID4_ESUCCESS;
 
 #else
   #error "unsupported platform"
